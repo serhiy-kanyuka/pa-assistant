@@ -1,0 +1,32 @@
+---
+description: Log every user request and AI action to INTERACTIONS.md in the project root
+alwaysApply: true
+---
+
+# Interaction Logging
+
+After completing each user request, append a summary to `INTERACTIONS.md` in the project root.
+
+## Format
+
+```markdown
+## YYYY-MM-DD HH:MM — <short title>
+
+**Request:** <what the user asked>
+
+**Actions:**
+- <what was done, files created/modified>
+
+**Files changed:**
+- `path/to/file.py` — description of change
+
+---
+```
+
+## Rules
+
+- Append to the file, never overwrite previous entries
+- Create the file with a `# Personal Assistant — Interaction Log` header if it doesn't exist
+- Keep each entry concise (3-8 lines)
+- Log after the work is done, not before
+- Include file paths that were created or modified

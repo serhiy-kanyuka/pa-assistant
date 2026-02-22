@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Assistant</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+    <div id="app">
+        <header>
+            <h1>Personal Assistant</h1>
+            <div id="user-info" class="hidden">
+                <img id="user-avatar" alt="avatar" />
+                <span id="user-name"></span>
+                <button id="sign-out-btn" onclick="signOut()">Sign Out</button>
+            </div>
+        </header>
+
+        <div id="toast" class="toast hidden" onclick="this.classList.add('hidden')"></div>
+
+        <main>
+            <div id="login-section">
+                <div class="login-card">
+                    <h2>Sign in to continue</h2>
+                    <p>Use your Google account to access the assistant.</p>
+                    <div id="g_id_onload"
+                         data-client_id="262349391036-m918n4n1i76tjqp4pr78utr3ser5e7cn.apps.googleusercontent.com"
+                         data-callback="handleCredentialResponse"
+                         data-auto_prompt="false">
+                    </div>
+                    <div class="g_id_signin"
+                         data-type="standard"
+                         data-size="large"
+                         data-theme="outline"
+                         data-text="sign_in_with"
+                         data-shape="rectangular"
+                         data-logo_alignment="left">
+                    </div>
+                </div>
+            </div>
+
+            <div id="main-section" class="hidden">
+                <form id="request-form" onsubmit="submitRequest(event)">
+                    <div class="form-row">
+                        <div class="form-group form-group-half">
+                            <label for="project-select">Project</label>
+                            <div class="project-row">
+                                <select id="project-select" onchange="onProjectChange()">
+                                    <option value="">-- Select project --</option>
+                                    <option value="__new__">+ New Project</option>
+                                </select>
+                                <input type="text" id="new-project-name"
+                                       class="hidden"
+                                       placeholder="Enter new project name" />
+                            </div>
+                        </div>
+
+                        <div class="form-group form-group-half">
+                            <label for="action-select">Action</label>
+                            <select id="action-select" onchange="onActionChange()">
+                                <option value="notes">Add Notes</option>
+                                <option value="audio">Audio Notes</option>
+                                <option value="files">Add Files</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="notes-input">Notes</label>
+                        <textarea id="notes-input"
+                                  rows="4"
+                                  placeholder="Type your notes here..."></textarea>
+                    </div>
+
+                    <div id="audio-section" class="hidden">
+                        <div class="audio-recorder">
+                            <button type="button" id="record-btn" onclick="toggleRecording()">
+                                <span id="record-icon" class="record-icon"></span>
+                                <span id="record-label">Tap to Record</span>
+                            </button>
+                            <div id="record-timer" class="record-timer hidden">00:00</div>
+                        </div>
+                        <div id="audio-preview" class="hidden">
+                            <audio id="audio-player" controls></audio>
+                            <button type="button" class="audio-discard" onclick="discardRecording()">Discard</button>
+                        </div>
+                    </div>
+
+                    <div id="files-section" class="hidden">
+                        <div class="form-group">
+                            <label for="instruction-input">Instruction</label>
+                            <textarea id="instruction-input"
+                                      rows="3"
+                                      placeholder="Instruction for the files (optional)"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="file-upload">Attach Files</label>
+                            <div class="file-upload-area" id="drop-zone">
+                                <input type="file" id="file-upload" multiple
+                                       onchange="updateFileList()" />
+                                <p>Click to select or drag &amp; drop files here</p>
+                            </div>
+                            <ul id="file-list"></ul>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="submit-btn">
+                        <span id="submit-text">Add Notes</span>
+                        <span id="submit-spinner" class="hidden spinner"></span>
+                    </button>
+                </form>
+
+            </div>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

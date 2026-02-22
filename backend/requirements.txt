@@ -1,0 +1,2 @@
+# boto3 is included in the Lambda Python runtime — no need to package it
+# No external dependencies required
