@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROLE_ARN="arn:aws:iam::872773654986:role/personal-assistant-rclone-role"
 MFA_ARN="arn:aws:iam::872773654986:mfa/iPhone-rclone"
-DURATION=7200
+DURATION=43200
 AWS_PROFILE_NAME="pa-rclone"
 RCLONE_CONF="${HOME}/.config/rclone/rclone.conf"
 RCLONE_SECTION="pa-s3"

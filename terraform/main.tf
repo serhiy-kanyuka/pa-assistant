@@ -63,6 +63,18 @@ resource "aws_kms_key" "data" {
         ]
         Resource = "*"
       },
+      {
+        Sid       = "RcloneRoleEncryptDecrypt"
+        Effect    = "Allow"
+        Principal = { AWS = aws_iam_role.rclone_role.arn }
+        Action = [
+          "kms:Decrypt",
+          "kms:Encrypt",
+          "kms:GenerateDataKey",
+          "kms:DescribeKey",
+        ]
+        Resource = "*"
+      },
     ]
   })
 
@@ -120,8 +132,54 @@ resource "aws_iam_user" "rclone" {
 }
 
 resource "aws_iam_user_policy" "rclone_s3" {
-  name = "${var.project_name}-rclone-s3"
+  name = "${var.project_name}-rclone-sts"
   user = aws_iam_user.rclone.name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid      = "AllowAssumeRcloneRole"
+        Effect   = "Allow"
+        Action   = "sts:AssumeRole"
+        Resource = aws_iam_role.rclone_role.arn
+      },
+    ]
+  })
+}
+
+resource "aws_iam_access_key" "rclone" {
+  user = aws_iam_user.rclone.name
+}
+
+# =============================================================================
+# IAM Role for rclone (assumed with MFA, 2-hour sessions)
+# =============================================================================
+
+resource "aws_iam_role" "rclone_role" {
+  name = "${var.project_name}-rclone-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Sid       = "AllowRcloneUserWithMFA"
+      Effect    = "Allow"
+      Principal = { AWS = aws_iam_user.rclone.arn }
+      Action    = "sts:AssumeRole"
+      Condition = {
+        Bool = { "aws:MultiFactorAuthPresent" = "true" }
+      }
+    }]
+  })
+
+  max_session_duration = 43200
+
+  tags = { Name = "${var.project_name}-rclone-role" }
+}
+
+resource "aws_iam_role_policy" "rclone_role_s3" {
+  name = "${var.project_name}-rclone-role-s3"
+  role = aws_iam_role.rclone_role.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -140,10 +198,6 @@ resource "aws_iam_user_policy" "rclone_s3" {
       },
     ]
   })
-}
-
-resource "aws_iam_access_key" "rclone" {
-  user = aws_iam_user.rclone.name
 }
 
 # =============================================================================
