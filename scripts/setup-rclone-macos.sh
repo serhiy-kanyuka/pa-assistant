@@ -6,23 +6,11 @@ TERRAFORM_DIR="$(dirname "$SCRIPT_DIR")/terraform"
 MOUNT_POINT="${HOME}/PA-Projects"
 REMOTE_NAME="pa-s3"
 
-echo "=== rclone Setup for macOS ==="
+echo "=== rclone Setup for macOS (nfsmount, no macFUSE required) ==="
 
 if ! command -v rclone &>/dev/null; then
     echo "Installing rclone via Homebrew..."
     brew install rclone
-fi
-
-if ! command -v macfuse &>/dev/null && ! test -d /Library/Filesystems/macfuse.fs; then
-    echo ""
-    echo "WARNING: macFUSE is required for rclone mount on macOS."
-    echo "Install from: https://osxfuse.github.io/"
-    echo "  brew install --cask macfuse"
-    echo ""
-    read -p "Continue anyway? (y/N): " confirm
-    if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
-        exit 1
-    fi
 fi
 
 echo ""
@@ -76,7 +64,7 @@ cat > "$PLIST_PATH" <<EOF
     <key>ProgramArguments</key>
     <array>
         <string>${RCLONE_BIN}</string>
-        <string>mount</string>
+        <string>nfsmount</string>
         <string>${REMOTE_NAME}:${BUCKET}</string>
         <string>${MOUNT_POINT}</string>
         <string>--vfs-cache-mode</string>
@@ -89,8 +77,6 @@ cat > "$PLIST_PATH" <<EOF
         <string>30s</string>
         <string>--vfs-read-ahead</string>
         <string>128M</string>
-        <string>--volname</string>
-        <string>Personal Assistant</string>
         <string>--log-level</string>
         <string>INFO</string>
     </array>
@@ -114,7 +100,6 @@ echo "=== Setup Complete ==="
 echo ""
 echo "Mount point:  ${MOUNT_POINT}"
 echo "Projects at:  ${MOUNT_POINT}/projects/"
-echo "Volume name:  'Personal Assistant' (visible in Finder)"
 echo ""
 echo "Commands:"
 echo "  launchctl list | grep rclone          # check status"

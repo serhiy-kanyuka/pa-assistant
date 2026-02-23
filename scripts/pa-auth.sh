@@ -75,18 +75,52 @@ with open(conf_path, 'w') as f:
 print(f"Updated [{section}] in {conf_path}")
 PYEOF
 
-if systemctl --user is-active rclone-pa.service &>/dev/null; then
-    echo "Restarting rclone service..."
-    systemctl --user restart rclone-pa.service
+MOUNT_POINT="${HOME}/PA-Projects"
+BUCKET="pa-kanyuka-info-data"
+mkdir -p "$MOUNT_POINT"
+
+restart_rclone_mount() {
+    # Kill any existing rclone mount for PA-Projects
+    pkill -f "rclone.*${MOUNT_POINT}" 2>/dev/null || true
     sleep 1
-    if systemctl --user is-active rclone-pa.service &>/dev/null; then
-        echo "rclone service restarted successfully."
+    umount "$MOUNT_POINT" 2>/dev/null || true
+    sleep 1
+
+    if [[ "$(uname)" == "Darwin" ]]; then
+        RCLONE_BIN="${RCLONE_BIN:-$(command -v rclone)}"
+        nohup "$RCLONE_BIN" nfsmount "${RCLONE_SECTION}:${BUCKET}" "$MOUNT_POINT" \
+            --vfs-cache-mode full \
+            --vfs-cache-max-size 10G \
+            --vfs-write-back 5s \
+            --dir-cache-time 30s \
+            --vfs-read-ahead 128M \
+            --log-level INFO \
+            --log-file /tmp/rclone-pa.log \
+            &>/dev/null &
+        disown
     else
-        echo "WARNING: rclone service failed to start. Check: journalctl --user -u rclone-pa.service"
+        if systemctl --user is-active rclone-pa.service &>/dev/null; then
+            systemctl --user restart rclone-pa.service
+        else
+            systemctl --user start rclone-pa.service
+        fi
     fi
-else
-    echo "rclone-pa.service is not running. Start it with: systemctl --user start rclone-pa.service"
-fi
+
+    sleep 3
+    if ls "${MOUNT_POINT}/projects/" &>/dev/null 2>&1; then
+        echo "Mount active at ${MOUNT_POINT}/projects/"
+        ls "${MOUNT_POINT}/projects/"
+    else
+        echo "WARNING: Mount not ready yet. Check: ls ${MOUNT_POINT}/projects/"
+        if [[ "$(uname)" == "Darwin" ]]; then
+            echo "Logs: cat /tmp/rclone-pa.log"
+        else
+            echo "Logs: journalctl --user -u rclone-pa.service"
+        fi
+    fi
+}
+
+restart_rclone_mount
 
 echo ""
 echo "Temporary credentials active until: $EXPIRATION"

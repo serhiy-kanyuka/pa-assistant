@@ -321,3 +321,23 @@ Deployed the full personal assistant infrastructure to AWS.
 - `backend/lambda_function.py` — action="audio" handler: store audio file, update NOTES.md with transcription placeholder
 
 ---
+
+## 2026-02-23 13:30 — Configure rclone on MacBook Air
+
+**Request:** Set up rclone to mount the S3 data bucket on the MacBook Air laptop.
+
+**Actions:**
+- Installed rclone v1.73.1 via Homebrew
+- Configured `~/.config/rclone/rclone.conf` with `pa-s3` S3 remote (using MFA temporary credentials from `pa-auth.sh`)
+- Updated `scripts/setup-rclone-macos.sh` to use `nfsmount` instead of `mount` (no macFUSE dependency)
+- Updated `scripts/pa-auth.sh` to detect macOS and start `rclone nfsmount` in background (was Linux-only with systemctl)
+- Created `scripts/finish-rclone-macos.sh` helper for standalone credential injection
+- Removed LaunchAgent (not suitable for temporary STS credentials; `pa-auth.sh` manages mount lifecycle)
+- Verified mount: all 5 projects accessible at `~/PA-Projects/projects/`
+
+**Files changed:**
+- `scripts/pa-auth.sh` — added macOS support: nfsmount background process, platform detection, mount verification
+- `scripts/setup-rclone-macos.sh` — switched from `mount` to `nfsmount`, removed macFUSE dependency
+- `scripts/finish-rclone-macos.sh` — new helper script for one-step credential setup
+
+---
