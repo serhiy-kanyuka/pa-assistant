@@ -340,4 +340,6 @@ Deployed the full personal assistant infrastructure to AWS.
 - `scripts/setup-rclone-macos.sh` — switched from `mount` to `nfsmount`, removed macFUSE dependency
 - `scripts/finish-rclone-macos.sh` — new helper script for one-step credential setup
 
+**Fix (same session):** The `nohup ... & disown` approach for backgrounding rclone on macOS was unreliable — the NFS mount would drop after the parent script exited. Replaced with rclone's native `--daemon --daemon-wait 10s` flags, which properly fork the process and wait for the mount to be ready before the parent exits. Verified mount works: `localhost:/pa-s3 pa-kanyuka-info-data on ~/PA-Projects (nfs)`.
+
 ---

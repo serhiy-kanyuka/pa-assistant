@@ -80,15 +80,15 @@ BUCKET="pa-kanyuka-info-data"
 mkdir -p "$MOUNT_POINT"
 
 restart_rclone_mount() {
-    # Kill any existing rclone mount for PA-Projects
     pkill -f "rclone.*${MOUNT_POINT}" 2>/dev/null || true
     sleep 1
     umount "$MOUNT_POINT" 2>/dev/null || true
     sleep 1
 
+    RCLONE_BIN="${RCLONE_BIN:-$(command -v rclone)}"
+
     if [[ "$(uname)" == "Darwin" ]]; then
-        RCLONE_BIN="${RCLONE_BIN:-$(command -v rclone)}"
-        nohup "$RCLONE_BIN" nfsmount "${RCLONE_SECTION}:${BUCKET}" "$MOUNT_POINT" \
+        "$RCLONE_BIN" nfsmount "${RCLONE_SECTION}:${BUCKET}" "$MOUNT_POINT" \
             --vfs-cache-mode full \
             --vfs-cache-max-size 10G \
             --vfs-write-back 5s \
@@ -96,8 +96,7 @@ restart_rclone_mount() {
             --vfs-read-ahead 128M \
             --log-level INFO \
             --log-file /tmp/rclone-pa.log \
-            &>/dev/null &
-        disown
+            --daemon --daemon-wait 10s
     else
         if systemctl --user is-active rclone-pa.service &>/dev/null; then
             systemctl --user restart rclone-pa.service
@@ -106,17 +105,13 @@ restart_rclone_mount() {
         fi
     fi
 
-    sleep 3
+    sleep 1
     if ls "${MOUNT_POINT}/projects/" &>/dev/null 2>&1; then
         echo "Mount active at ${MOUNT_POINT}/projects/"
         ls "${MOUNT_POINT}/projects/"
     else
-        echo "WARNING: Mount not ready yet. Check: ls ${MOUNT_POINT}/projects/"
-        if [[ "$(uname)" == "Darwin" ]]; then
-            echo "Logs: cat /tmp/rclone-pa.log"
-        else
-            echo "Logs: journalctl --user -u rclone-pa.service"
-        fi
+        echo "WARNING: Mount not ready yet."
+        echo "Logs: $([ "$(uname)" = Darwin ] && echo 'cat /tmp/rclone-pa.log' || echo 'journalctl --user -u rclone-pa.service')"
     fi
 }
 
